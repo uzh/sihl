@@ -61,5 +61,4 @@ services:
 
 volumes:
   opam:
-  node_modules:
   build:
