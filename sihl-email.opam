@@ -11,14 +11,16 @@ doc: "https://oxidizing.github.io/sihl/"
 bug-reports: "https://github.com/oxidizing/sihl/issues"
 depends: [
   "dune" {>= "2.7"}
-  "ocaml" {>= "4.08.0"}
-  "letters" {>= "0.4.0"}
-  "sihl" {= version}
-  "cohttp-lwt-unix" {>= "2.5.4"}
   "alcotest-lwt" {>= "1.4.0" & with-test}
-  "mariadb" {>= "1.1.6"}
-  "caqti-driver-postgresql" {>= "2.0.1" & with-test}
   "caqti-driver-mariadb" {>= "2.0.1" & with-test}
+  "caqti-driver-postgresql" {>= "2.0.1" & with-test}
+  "cohttp-lwt-unix" {>= "2.5.4"}
+  "letters" {>= "0.4.0"}
+  "mariadb" {>= "1.1.6"}
+  "ocaml" {>= "4.08.0"}
+  "ocaml-lsp-server" {with-dev-setup}
+  "ocamlformat" {with-dev-setup}
+  "sihl" {= version}
   "odoc" {with-doc}
 ]
 build: [
@@ -36,3 +38,6 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/oxidizing/sihl.git"
+pin-depends: [
+    ["letters.0.4.0" "git+https://github.com/mabiede/letters.git#bug/connection-close-wait"]
+]

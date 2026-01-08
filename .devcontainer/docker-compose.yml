@@ -8,7 +8,6 @@ services:
     volumes:
       # default user is "opam"
       - ..:/workspace:cached
-      - node_modules:/workspace/node_modules:cached
       - opam:/home/opam/.opam:cached
       - build:/workspace/_build:cached
       - ${HOME}${USERPROFILE}/.ssh:/home/opam/.ssh

@@ -10,9 +10,7 @@ all:
 
 .PHONY: deps
 deps:
-	opam install -y dune-release merlin ocamlformat utop
-	opam install -y alcotest-lwt mariadb.1.1.6 caqti-driver-postgresql.2.0.1 caqti-driver-mariadb.2.0.1
-	opam install . -y --deps-only --locked
+	opam install -y --deps-only --locked .
 	eval $(opam env)
 
 .PHONY: create_switch
