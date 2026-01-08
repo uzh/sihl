@@ -522,6 +522,10 @@ let suite =
           `Quick
           two_post_requests_yield_different_token
       ; test_case
+          "post requests yield CSRF token"
+          `Quick
+          post_request_yields_token
+      ; test_case
           "post request with invalid CSRF token in cookie and request fails"
           `Quick
           post_request_both_invalid_tokens_fails

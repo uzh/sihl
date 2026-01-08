@@ -10,7 +10,7 @@ homepage: "https://github.com/oxidizing/sihl"
 doc: "https://oxidizing.github.io/sihl/"
 bug-reports: "https://github.com/oxidizing/sihl/issues"
 depends: [
-  "dune" {>= "2.7"}
+  "dune" {>= "3.0"}
   "alcotest-lwt" {>= "1.4.0" & with-test}
   "caqti-driver-mariadb" {>= "2.0.1" & with-test}
   "caqti-driver-postgresql" {>= "2.0.1" & with-test}

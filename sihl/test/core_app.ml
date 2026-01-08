@@ -13,7 +13,6 @@ module Database = struct
   ;;
 
   let lifecycle = Sihl.Container.create_lifecycle ~start ~stop "database"
-  let register () = Sihl.Container.Service.create lifecycle
 end
 
 let user_service_running = ref false

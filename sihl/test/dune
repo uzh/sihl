@@ -1,10 +1,38 @@
+(library
+ (name test_support)
+ (modules database database_migration)
+ (wrapped false)
+ (libraries
+  sihl
+  alcotest-lwt
+  caqti-driver-mariadb
+  caqti-driver-postgresql
+  lwt_ppx)
+ (preprocess
+  (pps lwt_ppx)))
+
 (executables
  (names
   core_app
   core_configuration
   core_container
   core_utils
-  database_migration
+  database_mariadb
+  database_postgresql
+  database_migration_mariadb
+  database_migration_postgresql
+  web
+  web_csrf
+  web_http
+  web_session
+  web_flash
+  web_id
+  web_trailing_slash)
+ (modules
+  core_app
+  core_configuration
+  core_container
+  core_utils
   database_mariadb
   database_postgresql
   database_migration_mariadb
@@ -22,6 +50,7 @@
   caqti-driver-mariadb
   caqti-driver-postgresql
   cohttp-lwt-unix
+  test_support
   lwt_ppx)
  (preprocess
   (pps

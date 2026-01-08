@@ -10,7 +10,7 @@ all:
 
 .PHONY: deps
 deps:
-	opam install --yes --with-doc --with-test --with-dev-setup --deps-only --working-dir --update-invariant .
+	opam install --yes --with-doc --with-test --with-dev-setup --working-dir --update-invariant .
 	eval $(opam env)
 
 .PHONY: create_switch

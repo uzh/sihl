@@ -1,4 +1,4 @@
-FROM ocaml/opam2:4.11 as builder
+FROM ocaml/opam:debian-12-ocaml-5.4 as builder
 WORKDIR app
 COPY app.opam .
 COPY dune-project .
@@ -10,15 +10,16 @@ COPY database database
 COPY public public
 COPY resources resources
 
-RUN sudo apt-get update -y && \
-  opam remote remove --all default && \
-  opam remote add default https://opam.ocaml.org && \
-  opam pin add -yn app . && \
-  OPAMSOLVERTIMEOUT=180 opam depext -y app && \
-  opam install --deps-only -y app && \
-  sudo chown -R opam:nogroup .
+USER root
 
-RUN opam config exec -- dune build
+RUN apt-get update -y \
+  && ln -fs /usr/bin/opam-2.3 /usr/bin/opam \
+  && chown -R opam:nogroup .
+
+USER opam
+
+RUN opam install --yes --working-dir --update-invariant . \
+  && dune config exec -- dune build
 
 FROM debian:10
 WORKDIR /app

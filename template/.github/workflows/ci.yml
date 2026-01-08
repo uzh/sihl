@@ -1,62 +1,65 @@
 name: CI
-
 on: [push, pull_request]
-
 
 jobs:
   build:
     name: Build and test
-
     runs-on: ${{ matrix.os }}
-
+    services:
+      postgres:
+        image: postgres:12.2
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: dev
+        ports:
+          - 5432:5432
+      mariadb:
+        image: mariadb:10.3
+        env:
+          MYSQL_USER: admin
+          MYSQL_PASSWORD: password
+          MYSQL_DATABASE: dev
+          MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+        ports:
+          - 3306:3306
     strategy:
       fail-fast: false
       matrix:
         os:
-          - macos-latest
           - ubuntu-latest
-          - windows-latest
-        ocaml-version:
-          - 4.11.1
-
+        ocaml-compiler:
+          - 4.14
+          - 5.3
+          - 5.4
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Retrieve opam cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         if: runner.os != 'Windows'
         id: cache-opam
         with:
           path: ~/.opam
-          key: v1-${{ runner.os }}-opam-${{ matrix.ocaml-version }}-${{ hashFiles('app.opam.locked') }}
-          restore-keys: |
-            v1-${{ runner.os }}-opam-${{ matrix.ocaml-version }}-
+          key: v1-${{ runner.os }}-opam-${{ matrix.ocaml-compiler }}-${{ hashFiles('*.opam.locked') }}
 
       - name: Use OCaml ${{ matrix.ocaml-version }}
-        uses: avsm/setup-ocaml@v1
+        uses: ocaml/setup-ocaml@v3
         with:
-          ocaml-version: ${{ matrix.ocaml-version }}
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
 
-      - name: Update opam repository
-        if: steps.cache-opam.outputs.cache-hit != 'true'
-        run: opam update
-
-      - name: Pin package
-        run: opam pin add app.dev . --no-action
-
-      - name: Query and install external dependencies
-        run: opam depext app --yes --with-doc --with-test
+      - name: Install system dependencies
+        run: sudo apt-get update -y && sudo apt-get install -y libmariadb-dev
 
       - name: Install dependencies
-        if: steps.cache-opam.outputs.cache-hit != 'true'
-        run: |
-          opam install . --deps-only --with-doc --with-test --locked --unlock-base
-          opam install ocamlformat --skip-updates
+        run: make deps
 
-      - name: Upgrade dependencies
-        run: opam upgrade --fixup
+      - name: Recover from an Opam broken state
         if: steps.cache-opam.outputs.cache-hit == 'true'
+        run: |
+          opam install -y dune
+          opam upgrade --fixup
 
       - name: Build
         run: make build
@@ -65,5 +68,23 @@ jobs:
         run: make format
 
       - name: Run tests
-        run: make test
+        run: make test-all
 
+      - name: Pin current Sihl
+        run: opam pin add sihl .
+
+      - name: Generate PostgreSQL model
+        run: |
+          cd template
+          ROOT_PATH=. LOGS_DIR=. make sihl gen.model postgresql employee title:string is_premium:bool age:int shipped_at:datetime
+          DATABASE_URL=postgres://admin:password@127.0.0.1:5432/dev ENV_FILES_PATH=. ROOT_PATH=. LOGS_DIR=. make test
+
+      - name: Generate MariaDB model
+        run: |
+          cd template
+          rm -r app/domain/employee database/employee.ml test/employee
+          ROOT_PATH=. LOGS_DIR=. make sihl gen.model mariadb employee title:string is_premium:bool age:int shipped_at:datetime
+          echo "module Migration = Sihl.Database.Migration.MariaDb" > service/service.ml
+          echo "(executable (name run) (libraries sihl service routes database schedule command caqti-driver-mariadb))" > run/dune
+          opam install caqti-driver-mariadb
+          DATABASE_URL=mariadb://admin:password@127.0.0.1:3306/dev ENV_FILES_PATH=. ROOT_PATH=. LOGS_DIR=. make test
