@@ -10,7 +10,7 @@ all:
 
 .PHONY: deps
 deps:
-	opam install -y --deps-only --locked .
+	opam install -y --deps-only --with-test --with-dev-setup --locked .
 	eval $(opam env)
 
 .PHONY: create_switch
@@ -42,7 +42,7 @@ clean: ## Clean build artifacts and other generated files
 	opam exec -- dune clean --root .
 
 .PHONY: format
-format: build ## Format the codebase with ocamlformat
+format: ## Format the codebase with ocamlformat
 	opam exec -- dune build --root . --auto-promote @fmt
 
 .PHONY: sihl

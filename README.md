@@ -34,7 +34,7 @@
 * [Contact](#contact)
 * [Acknowledgements](#acknowledgements)
 
-## About 
+## About
 
 *Note that even though Sihl is being used in production, the API is still under active development.*
 
@@ -44,7 +44,7 @@ Sihl is a batteries-included web framework built on top of [Opium](https://githu
 
 Checkout the [getting started](https://oxidizing.github.io/sihl/sihl/index.html#getting-started) section of the documentation.
 
-If you want to jump into code have a look at the [demo project](https://github.com/oxidizing/sihl-demo). 
+If you want to jump into code have a look at the [demo project](https://github.com/oxidizing/sihl-demo).
 
 ## Background
 
@@ -68,43 +68,43 @@ OCaml itself ensures a certain level of correctness at compile-time. In order to
 
 These are some of things that Sihl can take care of for you.
 
-- Database handling (pooling, transactions, migrations)
-- Configuration (from env variables to configuration services)
-- Logging
-- User management
-- Token management 
-- Session management 
-- HTTP routes & middlewares
-- Flash Messages 
-- Authentication
-- Authorization
-- Emailing
-- CLI Commands
-- Job Queue
-- Schedules
-- Block Storage
+* Database handling (pooling, transactions, migrations)
+* Configuration (from env variables to configuration services)
+* Logging
+* User management
+* Token management
+* Session management
+* HTTP routes & middlewares
+* Flash Messages
+* Authentication
+* Authorization
+* Emailing
+* CLI Commands
+* Job Queue
+* Schedules
+* Block Storage
 
 ### Do we need another web framework?
 
 Yes, because all other frameworks have not been invented here!
 
-On a more serious note, originally we wanted to collect a set of services, libraries, best practices and architecture to quickly and sustainably spin-off our own tools and products. 
+On a more serious note, originally we wanted to collect a set of services, libraries, best practices and architecture to quickly and sustainably spin-off our own tools and products.
 An evaluation of languages and tools lead us to build the 5th iteration of what became Sihl with OCaml. We believe OCaml is a phenomenal place to build web apps.
 
 Thanks to OCaml, Sihl ...
 
-* ... runs fast 
-* ... compiles fast 
+* ... runs fast
+* ... compiles fast
 * ... is pragmatic and safe
 * ... is fun to use
 
 ## Documentation
 
-The API documentation for the latest version can be found here: https://oxidizing.github.io/sihl
+The API documentation for the latest version can be found here: <https://oxidizing.github.io/sihl>
 
 ## Ecosystem
 
-- https://github.com/uzh/ask
+* <https://github.com/uzh/ask>
 
 ## Roadmap
 
@@ -122,6 +122,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 
-Oxidizing Systems - [@oxidizingsys](https://twitter.com/oxidizingsys) - hello@oxidizing.io
+Oxidizing Systems - [@oxidizingsys](https://twitter.com/oxidizingsys) - <hello@oxidizing.io>
 
 Project Link: [https://github.com/oxidizing/sihl](https://github.com/oxidizing/sihl)
