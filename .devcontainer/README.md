@@ -25,3 +25,7 @@ There is an `Adminer` container added to the development package. To be able to 
 1. Uncomment its line in the `.devcontainer/devcontainer.json` under `runServices`
 1. Use `Remote-Containers: Rebuild Container` that it will also create and startup the `Adminer` container
 1. Open your web browser and open `localhost:8080`
+
+## NOTE
+
+Installation of packages will downgrade `ocaml-compiler` to version `5.3.0` as of `ppxlib` used by `tyxml-ppx` has currently it's upper bound to `< 5.4.0` (PR in progress: <https://github.com/ocaml-ppx/ppxlib/pull/607>)
