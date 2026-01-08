@@ -1,17 +1,6 @@
-FROM node:lts AS node
-FROM ocaml/opam:debian-10-ocaml-4.14
+FROM ocaml/opam:debian-12-ocaml-5.4
 
 USER root
-
-# copy node from node container and link commands
-COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
-COPY --from=node /usr/local/bin/node /usr/local/bin/node
-COPY --from=node /opt /opt
-RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
-  && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
-  && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
-  && ln -s /opt/yarn-v*/bin/yarn /usr/local/bin/yarn \
-  && ln -s /opt/yarn-v*/bin/yarnpkg /usr/local/bin/yarnpkg
 
 # copy hadolint
 COPY --from=hadolint/hadolint:latest-alpine /bin/hadolint /bin/hadolint
@@ -51,7 +40,7 @@ RUN bash -c 'echo "http		80/tcp	www		# WorldWideWeb HTTP" >> /etc/services' \
   && bash -c 'echo "https		443/tcp	www		# WorldWideWeb HTTPS" >> /etc/services'
 
 # link opam version
-RUN ln -fs /usr/bin/opam-2.2 /usr/bin/opam
+RUN ln -fs /usr/bin/opam-2.3 /usr/bin/opam
 
 USER opam
 

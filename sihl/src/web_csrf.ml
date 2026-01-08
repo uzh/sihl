@@ -48,18 +48,12 @@ module Crypto = struct
         work. *)
     val make : string -> t
 
-    (** [to_raw secret] turns a [secret] into a [Cstruct.t]. *)
-    val to_raw : t -> Cstruct.t
+    (** [to_raw secret] turns a [secret] into a string. *)
+    val to_raw : t -> string
   end = struct
-    type t = Cstruct.t
+    type t = string
 
-    let make secret =
-      secret
-      |> Digestif.SHA256.digest_string
-      |> Digestif.SHA256.to_raw_string
-      |> Cstruct.of_string
-    ;;
-
+    let make secret = Digestif.SHA256.(digest_string secret |> to_raw_string)
     let to_raw = CCFun.id
   end
 
@@ -80,56 +74,50 @@ module Crypto = struct
         decrypted. *)
     val of_uri_safe_string : string -> t option
 
-    (** [to_struct tkn] turns an encrypted token [tkn] to a raw format. *)
-    val to_struct : t -> Cstruct.t
+    (** [to_string tkn] turns an encrypted token [tkn] to a raw string. *)
+    val to_string : t -> string
 
-    (** [from_struct ~with_secret tkn] encrypts a raw token [tkn] using AES in
+    (** [from_string ~with_secret tkn] encrypts a raw token [tkn] using AES in
         ECB mode given a secret [with_secret]. *)
-    val from_struct : with_secret:Secret.t -> Cstruct.t -> t
+    val from_string : with_secret:Secret.t -> string -> t
 
-    (** [from_struct_random ~with_secret tkn] encrypts a raw token [tkn].
+    (** [from_string_random ~with_secret tkn] encrypts a raw token [tkn].
         Additionally the encrypted result is scrambled with a random salt (IV)
         using AES in CBC mode given a secret [with_secret].*)
-    val from_struct_random : with_secret:Secret.t -> Cstruct.t -> t
+    val from_string_random : with_secret:Secret.t -> string -> t
   end = struct
-    type t = Cstruct.t
+    type t = string
 
-    let equal = Cstruct.equal
+    let equal = String.equal
 
     let to_uri_safe_string t =
-      t
-      |> Cstruct.to_string
-      |> Base64.encode_string ~alphabet:Base64.uri_safe_alphabet
+      Base64.encode_string ~alphabet:Base64.uri_safe_alphabet t
     ;;
 
     let of_uri_safe_string t =
-      t
-      |> Base64.decode ~alphabet:Base64.uri_safe_alphabet
-      |> CCResult.to_opt
-      |> CCOption.map Cstruct.of_string
+      t |> Base64.decode ~alphabet:Base64.uri_safe_alphabet |> CCResult.to_opt
     ;;
 
-    let to_struct = CCFun.id
+    let to_string = CCFun.id
 
-    let from_struct ~with_secret value =
-      let open Cstruct in
-      let open Mirage_crypto.AES.ECB in
-      let key = with_secret |> Secret.to_raw |> to_string |> of_secret in
-      encrypt ~key (to_string value) |> of_string
+    let from_string ~with_secret value =
+      let key =
+        with_secret |> Secret.to_raw |> Mirage_crypto.AES.ECB.of_secret
+      in
+      Mirage_crypto.AES.ECB.encrypt ~key value
     ;;
 
-    let from_struct_random ~with_secret value =
-      let open Cstruct in
-      let open Mirage_crypto.AES.CBC in
-      let key = with_secret |> Secret.to_raw |> to_string |> of_secret in
+    let from_string_random ~with_secret value =
+      let key =
+        with_secret |> Secret.to_raw |> Mirage_crypto.AES.CBC.of_secret
+      in
       let iv = Mirage_crypto_rng.generate block_size in
-      append (of_string iv) @@ (encrypt ~key ~iv (to_string value) |> of_string)
+      iv ^ Mirage_crypto.AES.CBC.encrypt ~key ~iv value
     ;;
   end
 
   (** This module does not provide an API to read a decrypted token (by turning
-      it into a string, Cstruct.t or similar). This is to prevent leaking CSRF
-      tokens. *)
+      it into a string or similar). This is to prevent leaking CSRF tokens. *)
   module Decrypted_token : sig
     type t
 
@@ -137,9 +125,9 @@ module Crypto = struct
         equal. *)
     val equal : t -> t -> bool
 
-    (** [equal_struct tkn raw] checks if a decrypted token [tkn] is equal to a
+    (** [equal_string tkn raw] checks if a decrypted token [tkn] is equal to a
         raw token [raw]. *)
-    val equal_struct : t -> Cstruct.t -> bool
+    val equal_string : t -> string -> bool
 
     (** [from_encrypted ~with_secret tkn] decrypts an encrypted token [tkn]
         using AES in ECB mode given a secret [with_secret]. *)
@@ -147,48 +135,46 @@ module Crypto = struct
 
     (** [from_encrypted_random ~with_secret tkn] decrypts a randomized encrypted
         token [tkn] given a secret [with_secret]. This function reverses
-        [Encrypted_token.from_struct_random] since a specific format is
+        [Encrypted_token.from_string_random] since a specific format is
         required. *)
     val from_encrypted_random : with_secret:Secret.t -> Encrypted_token.t -> t
 
     (** [from_encrypted_to_encrypted_random ~with_secret tkn] turns a normal
         encrypted token [tkn] into a randomly encrypted token by first
         decrypting it and then re-encrypting it with
-        [Encrypted_token.from_struct_random].*)
+        [Encrypted_token.from_string_random].*)
     val from_encrypted_to_encrypted_random
       :  with_secret:Secret.t
       -> Encrypted_token.t
       -> Encrypted_token.t
   end = struct
-    type t = Cstruct.t
+    type t = string
 
-    let equal = Cstruct.equal
-    let equal_struct = equal
+    let equal = String.equal
+    let equal_string = equal
 
-    let from_encrypted ~with_secret (value : Encrypted_token.t) : Cstruct.t =
-      let open Cstruct in
-      let open Mirage_crypto.AES.ECB in
-      let key = with_secret |> Secret.to_raw |> to_string |> of_secret in
-      decrypt ~key (Encrypted_token.to_struct value |> to_string) |> of_string
+    let from_encrypted ~with_secret value =
+      let key =
+        with_secret |> Secret.to_raw |> Mirage_crypto.AES.ECB.of_secret
+      in
+      Mirage_crypto.AES.ECB.decrypt ~key (Encrypted_token.to_string value)
     ;;
 
-    let from_encrypted_random ~with_secret (value : Encrypted_token.t)
-      : Cstruct.t
-      =
-      let open Cstruct in
-      let open Mirage_crypto.AES.CBC in
-      let key = with_secret |> Secret.to_raw |> to_string |> of_secret in
-      let iv, value =
-        value
-        |> Encrypted_token.to_struct
-        |> CCFun.flip Cstruct.split block_size
+    let from_encrypted_random ~with_secret value =
+      let key =
+        with_secret |> Secret.to_raw |> Mirage_crypto.AES.CBC.of_secret
       in
-      decrypt ~key ~iv:(to_string iv) (to_string value) |> of_string
+      let value_str = Encrypted_token.to_string value in
+      let iv = String.sub value_str 0 block_size in
+      let encrypted =
+        String.sub value_str block_size (String.length value_str - block_size)
+      in
+      Mirage_crypto.AES.CBC.decrypt ~key ~iv encrypted
     ;;
 
     let from_encrypted_to_encrypted_random ~with_secret value =
       from_encrypted ~with_secret value
-      |> Encrypted_token.from_struct_random ~with_secret
+      |> Encrypted_token.from_string_random ~with_secret
     ;;
   end
 end
@@ -244,11 +230,9 @@ let middleware
               ~with_secret:block_secret
               tkn )
         | None ->
-          let value =
-            Mirage_crypto_rng.generate token_length |> Cstruct.of_string
-          in
-          ( Encrypted_token.from_struct ~with_secret:block_secret value
-          , Encrypted_token.from_struct_random ~with_secret:block_secret value )
+          let value = Mirage_crypto_rng.generate token_length in
+          ( Encrypted_token.from_string ~with_secret:block_secret value
+          , Encrypted_token.from_string_random ~with_secret:block_secret value )
       in
       let req =
         set

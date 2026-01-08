@@ -10,9 +10,7 @@ all:
 
 .PHONY: deps
 deps:
-	opam install -y dune-release merlin ocamlformat utop
-	opam install -y alcotest-lwt mariadb.1.1.6 caqti-driver-postgresql.2.0.1 caqti-driver-mariadb.2.0.1
-	opam install . -y --deps-only --locked
+	opam install --yes --with-doc --with-test --with-dev-setup --working-dir --update-invariant .
 	eval $(opam env)
 
 .PHONY: create_switch
@@ -44,7 +42,7 @@ clean: ## Clean build artifacts and other generated files
 	opam exec -- dune clean --root .
 
 .PHONY: format
-format: build ## Format the codebase with ocamlformat
+format: ## Format the codebase with ocamlformat
 	opam exec -- dune build --root . --auto-promote @fmt
 
 .PHONY: sihl

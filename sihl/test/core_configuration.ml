@@ -192,6 +192,7 @@ let suite =
       , [ test_case "read empty" `Quick read_empty_value
         ; test_case "read non-existing" `Quick read_non_existing
         ; test_case "read existing" `Quick read_existing
+        ; test_case "read updated" `Quick read_updated
         ; test_case "read schema invalid" `Quick read_schema_invalid
         ; test_case "read schema" `Quick read_schema
         ; test_case

@@ -4,8 +4,8 @@ open Sihl.Web
 let can_parse_uri_safe _ () =
   let open Csrf.Crypto in
   let with_secret = Sihl.Configuration.read_secret () |> Secret.make in
-  let value = Mirage_crypto_rng.generate token_length |> Cstruct.of_string in
-  let enc = Encrypted_token.from_struct ~with_secret value in
+  let value = Mirage_crypto_rng.generate token_length in
+  let enc = Encrypted_token.from_string ~with_secret value in
   let parsed =
     enc
     |> Encrypted_token.to_uri_safe_string
@@ -21,33 +21,33 @@ let can_parse_uri_safe _ () =
 let crypto_undo_helper encrypt decrypt =
   let open Csrf.Crypto in
   let with_secret = Sihl.Configuration.read_secret () |> Secret.make in
-  let value = Mirage_crypto_rng.generate token_length |> Cstruct.of_string in
+  let value = Mirage_crypto_rng.generate token_length in
   let dec = encrypt ~with_secret value |> decrypt ~with_secret in
   let open Alcotest in
   check bool "Same decrypted CSRF tokens" true
-  @@ Decrypted_token.equal_struct dec value;
+  @@ Decrypted_token.equal_string dec value;
   Lwt.return ()
 ;;
 
 let decrypt_random_undoes_encrypt_random _ () =
   let open Csrf.Crypto in
   crypto_undo_helper
-    Encrypted_token.from_struct_random
+    Encrypted_token.from_string_random
     Decrypted_token.from_encrypted_random
 ;;
 
 let decrypt_undoes_encrypt _ () =
   let open Csrf.Crypto in
-  crypto_undo_helper Encrypted_token.from_struct Decrypted_token.from_encrypted
+  crypto_undo_helper Encrypted_token.from_string Decrypted_token.from_encrypted
 ;;
 
 let csrf_simulation _ () =
   let open Csrf.Crypto in
   let with_secret = Sihl.Configuration.read_secret () |> Secret.make in
   (* GET request generates value *)
-  let value = Mirage_crypto_rng.generate token_length |> Cstruct.of_string in
+  let value = Mirage_crypto_rng.generate token_length in
   (* Encrypt value for cookie token *)
-  let enc = Encrypted_token.from_struct ~with_secret value in
+  let enc = Encrypted_token.from_string ~with_secret value in
   (* Encrypt value with randomness for body token (take already encrypted cookie
      token because in middleware no access to original value *)
   let req =
@@ -67,13 +67,13 @@ let csrf_simulation _ () =
   let dec_stored = stored |> Decrypted_token.from_encrypted ~with_secret in
   let open Alcotest in
   let non_empty tkn =
-    check bool "Non empty encrypted token" false (Cstruct.is_empty @@ tkn)
+    check bool "Non empty encrypted token" false (String.length tkn = 0)
   in
   (* Make sure no token is empty *)
-  non_empty @@ Encrypted_token.to_struct received;
-  non_empty @@ Encrypted_token.to_struct stored;
-  non_empty @@ Cstruct.of_string req;
-  non_empty @@ Cstruct.of_string ck;
+  non_empty @@ Encrypted_token.to_string received;
+  non_empty @@ Encrypted_token.to_string stored;
+  non_empty @@ req;
+  non_empty @@ ck;
   check bool "Same decrypted CSRF tokens" true
   @@ Decrypted_token.equal dec_stored dec_received;
   Lwt.return ()
@@ -124,7 +124,7 @@ let get_request_yields_token _ () =
   in
   let wrapped_handler = apply_middlewares handler in
   let%lwt response = wrapped_handler req in
-  (* New encrypted token set in cookie *)
+  (* New token set in cookie *)
   let value = Sihl.Test.Session.find_resp csrf_name response in
   let open Alcotest in
   check bool "Has CSRF token" true (not @@ CCString.is_empty !token);
@@ -332,8 +332,7 @@ let post_request_with_nonmatching_token_fails _ () =
   (* Generate a random encrypted token *)
   let tkn =
     Mirage_crypto_rng.generate token_length
-    |> Cstruct.of_string
-    |> Encrypted_token.from_struct_random ~with_secret
+    |> Encrypted_token.from_string_random ~with_secret
     |> Encrypted_token.to_uri_safe_string
   in
   let post_req =
@@ -363,8 +362,7 @@ let post_request_with_nonmatching_cookie_fails _ () =
   let with_secret = Sihl.Configuration.read_secret () |> Secret.make in
   let tkn =
     Mirage_crypto_rng.generate token_length
-    |> Cstruct.of_string
-    |> Encrypted_token.from_struct ~with_secret
+    |> Encrypted_token.from_string ~with_secret
     |> Encrypted_token.to_uri_safe_string
   in
   (* New request with same token in body but non-matching token in cookie *)
@@ -523,6 +521,10 @@ let suite =
           "two post requests yield different CSRF token"
           `Quick
           two_post_requests_yield_different_token
+      ; test_case
+          "post requests yield CSRF token"
+          `Quick
+          post_request_yields_token
       ; test_case
           "post request with invalid CSRF token in cookie and request fails"
           `Quick
