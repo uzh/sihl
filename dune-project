@@ -78,6 +78,8 @@
   (ocamlformat :with-dev-setup)
   (opium
    (>= 0.20.0))
+  (rock
+   (>= 0.20.0))
   (ppx_deriving_yojson
    (>= 3.5.2))
   (ppx_fields_conv
