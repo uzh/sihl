@@ -204,9 +204,8 @@ let middleware
       (* Set fake token since CSRF is disabled *)
       handler (set "development" req)
     else
-      let
-      (* CSRF token might come from a multipart form *)
-      open
+      let (* CSRF token might come from a multipart form *)
+        open
         CCOption.Infix in
       let%lwt multipart = Opium.Request.to_multipart_form_data req in
       let%lwt received_encrypted_token =
