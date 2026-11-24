@@ -1,3 +1,9 @@
+## [Unreleased]
+
+### Changed
+
+- At startup, the migration service creates its state table (`core_migration_state` or `MIGRATION_STATE_TABLE`) only if a `SELECT` shows it is missing; it no longer runs `CREATE TABLE IF NOT EXISTS` every time. Once the table exists, an application can connect with a user that only has `SELECT`, `INSERT`, `UPDATE` and `DELETE`.
+
 ## [4.1.0] - 2026-11-19
 
 ### Added

@@ -101,8 +101,24 @@ module MariaDb : Sig = struct
     |> Caqti_type.(unit ->. unit)
   ;;
 
+  let exists_request =
+    let open Caqti_request.Infix in
+    {sql|
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = DATABASE()
+          AND table_name = ?
+      )
+    |sql}
+    |> Caqti_type.(string ->! bool)
+  ;;
+
   let create_table_if_not_exists ?ctx table =
-    Database.exec ?ctx (create_request table) ()
+    let%lwt exists = Database.find ?ctx exists_request table in
+    if exists
+    then Lwt.return_unit
+    else Database.exec ?ctx (create_request table) ()
   ;;
 
   let get = get
@@ -150,8 +166,17 @@ module PostgreSql : Sig = struct
     |> Caqti_type.(unit ->. unit)
   ;;
 
+  let exists_request =
+    let open Caqti_request.Infix in
+    {sql| SELECT to_regclass(?) IS NOT NULL |sql}
+    |> Caqti_type.(string ->! bool)
+  ;;
+
   let create_table_if_not_exists ?ctx table =
-    Database.exec ?ctx (create_request table) ()
+    let%lwt exists = Database.find ?ctx exists_request table in
+    if exists
+    then Lwt.return_unit
+    else Database.exec ?ctx (create_request table) ()
   ;;
 
   let get = get
